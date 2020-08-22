@@ -172,18 +172,18 @@ int main()
                     double throttle = j[1]["throttle"];    // (float) - The current throttle value [-1, 1].
 
                     cout<<"\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"<<endl;
-                    cout<<"!!! Print JSON data !!!"<<endl;
-                    cout<<"!!! ptsx size = "<<ptsx.size()<<endl;
-                    cout<<"!!! ptsy size = "<<ptsy.size()<<endl;
-//                    for(int i=0; i<ptsx.size(); i++)
-//                    {
-//                        cout<<"!!! ptsx = "<<ptsx[i]<<"\t"<<"ptsy = "<<ptsy[i]<<endl;
-//                    }
+//                    cout<<"!!! Print JSON data !!!"<<endl;
+//                    cout<<"!!! ptsx size = "<<ptsx.size()<<endl;
+//                    cout<<"!!! ptsy size = "<<ptsy.size()<<endl;
+                    for(int i=0; i<ptsx.size(); i++)
+                    {
+                        cout<<"!!! ptsx = "<<ptsx[i]<<"\t"<<"ptsy = "<<ptsy[i]<<endl;
+                    }
                     cout<<"!!! px = "<<px<<endl;
                     cout<<"!!! py = "<<py<<endl;
-                    cout<<"!!! psi_rad = "<<psi<<" rad"<<endl;
-                    cout<<"!!! psi_degree = "<<rad2deg(psi)<<" degree"<<endl;
-                    cout<<"!!! psi_unity_rad = "<<psi_unity<<" rad"<<endl;
+//                    cout<<"!!! psi_rad = "<<psi<<" rad"<<endl;
+//                    cout<<"!!! psi_degree = "<<rad2deg(psi)<<" degree"<<endl;
+//                    cout<<"!!! psi_unity_rad = "<<psi_unity<<" rad"<<endl;
                     cout<<"!!! psi_unity_degree = "<<rad2deg(psi_unity)<<" degree"<<endl;
                     cout<<"!!! v = "<<v<<" mph"<<endl;
                     cout<<"!!! v = "<<mph2kmh(v)<<" kmh"<<endl;
