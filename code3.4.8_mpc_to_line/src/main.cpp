@@ -41,22 +41,30 @@ int main()
     ptsy << -1, 1;
 
 
+
     // TODO: fit a polynomial to the above x and y coordinates
-    auto coeffs = polyfit(ptsx, ptsy, 1);
+    auto coeffs = polyfit(ptsx, ptsy, 1);    
+//    cout<<coeffs.rows()<<endl;
+//    cout<<coeffs.cols()<<endl;
+    cout<<"a0 = "<<coeffs[0]<<endl;
+    cout<<"a1 = "<<coeffs[1]<<endl;
 
     // NOTE: free feel to play around with these
     double x = -1;
-    double y = 10;
+    double y = -1;    // 10
     double psi = 0;
     double v = 10;
 
 
     // TODO: calculate the cross track error
     double cte = polyeval(coeffs, x) - y;
+    cout<<"cte = "<<cte<<endl;
 
 
     // TODO: calculate the orientation error
     double epsi = psi - atan(coeffs[1]) ;
+    cout<<"epsi = "<<epsi<<endl;
+    cout<<"epsi = "<<atan(coeffs[1])<<endl;
 
     VectorXd state(6);
     state << x, y, psi, v, cte, epsi;
@@ -72,9 +80,11 @@ int main()
 
     for(size_t i=0; i<iters; ++i)
     {
-//        cout<<"Iteration "<<i<<endl;
+        cout<<"Iteration "<<i<<endl;
 
         auto vars = mpc.Solve(state, coeffs);
+        cout<<"a0 = "<<coeffs[0]<<endl;
+        cout<<"a1 = "<<coeffs[1]<<endl;
 
         x_vals.push_back(vars[0]);
         y_vals.push_back(vars[1]);
@@ -87,12 +97,12 @@ int main()
         a_vals.push_back(vars[7]);
 
         state << vars[0], vars[1], vars[2], vars[3], vars[4], vars[5];
-//        cout<<"x = "<<vars[0]<<endl;
-//        cout<<"y = "<<vars[1]<<endl;
-//        cout<<"psi = "<<vars[2]<<endl;
-//        cout<<"v = "<<vars[3]<<endl;
-//        cout<<"cte = "<<vars[4]<<endl;
-//        cout<<"epsi = "<<vars[5]<<endl;
+        cout<<"x = "<<vars[0]<<endl;
+        cout<<"y = "<<vars[1]<<endl;
+        cout<<"psi = "<<vars[2]<<endl;
+        cout<<"v = "<<vars[3]<<endl;
+        cout<<"cte = "<<vars[4]<<endl;
+        cout<<"epsi = "<<vars[5]<<endl;
 //        cout<<"delta = "<<vars[6]<<endl;
 //        cout<<"a = "<<vars[7]<<endl;
 //        cout<<endl;
@@ -110,8 +120,14 @@ int main()
 //    plt::subplot(3, 1, 3);
 //    plt::title("Velocity");
 //    plt::plot(v_vals);
-//    plt::plot(x_vals, y_vals);
+    plt::figure();
+    plt::title("path");
+    plt::plot(x_vals, y_vals);
+
+    plt::figure();
+    plt::title("Velocity");
     plt::plot(v_vals);
+//    plt::plot(v_vals);
 
     plt::show();
 }

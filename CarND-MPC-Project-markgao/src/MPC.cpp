@@ -21,7 +21,7 @@ using std::endl;
 size_t N = 20;
 const double dt = 0.1;
 const double Lf = 2.67;
-const double ref_v = 20;    // mph
+const double ref_v = 15;    // mph
 
 // Initialized the size(Index) of each variable. Since the size of variable always change, the size_t is used.
 // State index , since the Ipopt needs vector inputs. Each variable should be saperated with N points interval.

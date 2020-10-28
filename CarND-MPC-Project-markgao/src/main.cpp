@@ -12,6 +12,7 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+#include <fstream>
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
 #include "MPC.h"
@@ -32,6 +33,10 @@ double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 double mph2kmh(double x) { return x * 1.609344; }
 double kmh2mph(double x) { return x * 0.6213712; }
+
+string data_file = "./dataLog.csv";
+std::ofstream logData(data_file);
+bool is_data_log = true;
 
 
 
@@ -139,6 +144,49 @@ int main()
 
 	// MPC is initialized here!
 	MPC mpc;
+    if(is_data_log)
+    {
+        logData
+                << "c_x" << ","
+                << "c_y" << ","
+                << "c_psi_degree" << ","
+                << "psi_unity_degree" << ","
+                << "c_speed_kmh" << ","
+                << "steering_angle" << ","
+                << "throttle" << ","
+                << "a0" << ","
+                << "a1" << ","
+                << "a2" << ","
+                << "a3" << ","
+                << "cte" << ","
+                << "epsi" << ","
+                << "global_x_1" << ","
+                << "global_x_2" << ","
+                << "global_x_3" << ","
+                << "global_x_4" << ","
+                << "global_x_5" << ","
+                << "global_x_6" << ","
+                << "global_y_1" << ","
+                << "global_y_2" << ","
+                << "global_y_3" << ","
+                << "global_y_4" << ","
+                << "global_y_5" << ","
+                << "global_y_6" << ","
+                << "veh_x_1" << ","
+                << "veh_x_2" << ","
+                << "veh_x_3" << ","
+                << "veh_x_4" << ","
+                << "veh_x_5" << ","
+                << "veh_x_6" << ","
+                << "veh_y_1" << ","
+                << "veh_y_2" << ","
+                << "veh_y_3" << ","
+                << "veh_y_4" << ","
+                << "veh_y_5" << ","
+                << "veh_y_6" << ","
+                << std::endl;
+    }
+
 
     h.onMessage([&mpc](uWS::WebSocket<uWS::SERVER> ws,
                        char *data,
@@ -182,15 +230,15 @@ int main()
                     cout<<"!!! px = "<<px<<endl;
                     cout<<"!!! py = "<<py<<endl;
 //                    cout<<"!!! psi_rad = "<<psi<<" rad"<<endl;
-//                    cout<<"!!! psi_degree = "<<rad2deg(psi)<<" degree"<<endl;
+                    cout<<"!!! psi_degree = "<<rad2deg(psi)<<" degree"<<endl;
 //                    cout<<"!!! psi_unity_rad = "<<psi_unity<<" rad"<<endl;
                     cout<<"!!! psi_unity_degree = "<<rad2deg(psi_unity)<<" degree"<<endl;
-                    cout<<"!!! v = "<<v<<" mph"<<endl;
+//                    cout<<"!!! v = "<<v<<" mph"<<endl;
                     cout<<"!!! v = "<<mph2kmh(v)<<" kmh"<<endl;
-                    cout<<"!!! steering_angle = "<<steering_angle<<endl;
-                    cout<<"!!! steering_angle = "<<steering_angle * 100<<" %"<<endl;
-                    cout<<"!!! throttle = "<<throttle<<endl;
-                    cout<<"!!! throttle = "<<throttle * 100<<" %"<<endl;
+//                    cout<<"!!! steering_angle = "<<rad2deg(steering_angle)<<" degrees"<<endl;
+//                    cout<<"!!! steering_angle = "<<steering_angle * 100<<" %"<<endl;
+//                    cout<<"!!! throttle = "<<throttle<<endl;
+//                    cout<<"!!! throttle = "<<throttle * 100<<" %"<<endl;
 
 
 
@@ -216,6 +264,55 @@ int main()
                     const double cte = polyeval(coeffs, 0);    // set x=0, obtain a0, path position
                     cout<<"!!! epsi = "<<epsi<<endl;
                     cout<<"!!! cte = "<<cte<<endl;
+                    cout<<"!!! a0 = "<<coeffs[0]<<endl;
+                    cout<<"!!! a1 = "<<coeffs[1]<<endl;
+                    cout<<"!!! a2 = "<<coeffs[2]<<endl;
+                    cout<<"!!! a3 = "<<coeffs[3]<<endl;
+
+
+                    // log data
+                    if(is_data_log)
+                    {
+                        logData
+                                << px << ","
+                                << py << ","
+                                << rad2deg(psi) << ","
+                                << rad2deg(psi_unity) << ","
+                                << mph2kmh(v) << ","
+                                << rad2deg(steering_angle) << ","
+                                << throttle * 100 << ","
+                                << coeffs[0] << ","
+                                << coeffs[1] << ","
+                                << coeffs[2] << ","
+                                << coeffs[3] << ","
+                                << cte << ","
+                                << epsi << ","
+                                << ptsx[0] << ","
+                                << ptsx[1] << ","
+                                << ptsx[2] << ","
+                                << ptsx[3] << ","
+                                << ptsx[4] << ","
+                                << ptsx[5] << ","
+                                << ptsy[0] << ","
+                                << ptsy[1] << ","
+                                << ptsy[2] << ","
+                                << ptsy[3] << ","
+                                << ptsy[4] << ","
+                                << ptsy[5] << ","
+                                << x_veh_coor[0] << ","
+                                << x_veh_coor[1] << ","
+                                << x_veh_coor[2] << ","
+                                << x_veh_coor[3] << ","
+                                << x_veh_coor[4] << ","
+                                << x_veh_coor[5] << ","
+                                << y_veh_coor[0] << ","
+                                << y_veh_coor[1] << ","
+                                << y_veh_coor[2] << ","
+                                << y_veh_coor[3] << ","
+                                << y_veh_coor[4] << ","
+                                << y_veh_coor[5] << ","
+                                << std::endl;
+                    }
 
 
                     // >>>>> State Update
@@ -259,7 +356,7 @@ int main()
 					msgJson["mpc_x"] = mpc_x_vals;
                     msgJson["mpc_y"] = mpc_y_vals;
 //                    cout<<"!!! final_mpc_results size = "<<final_mpc_results.size()<<endl;
-                    cout<<"!!! final_mpc_results x = "<<mpc_x_vals[0]<<endl;
+//                    cout<<"!!! final_mpc_results x = "<<mpc_x_vals[0]<<endl;
 //                    cout<<"!!! final_mpc_results y = "<<mpc_x_vals[1]<<endl;
 
 
