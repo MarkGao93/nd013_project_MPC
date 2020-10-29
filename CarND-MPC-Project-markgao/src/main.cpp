@@ -17,6 +17,7 @@
 #include "Eigen-3.3/Eigen/QR"
 #include "MPC.h"
 #include "json.hpp"
+#include "LeastSquareMethod.h"
 
 // for convenience
 using json = nlohmann::json;
@@ -129,6 +130,41 @@ Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals, int order)
 
 
 
+double curve_eval(Eigen::VectorXd x_veh_coor, Eigen::VectorXd y_veh_coor, Eigen::VectorXd coeffs, int eval_method)
+{
+    if(eval_method == 1)    // sum of delta y
+    {
+        double result = 0.0;
+        for(int i=0; i<x_veh_coor.size(); i++)
+        {
+            double fy = polyeval(coeffs, x_veh_coor[i]);
+            double y_error = fy - y_veh_coor[i];
+            result += fabs(y_error);
+        }
+
+        return result;
+    }
+    else if(eval_method == 2)    // sum of min distance
+    {
+        double result = 0.0;
+        for(int i=0; i<x_veh_coor.size(); i++)
+        {
+            double k = coeffs[1] + 2 * coeffs[2] * x_veh_coor[i] + 3 * coeffs[3] * x_veh_coor[i] * x_veh_coor[i];
+            double x_ = x_veh_coor[i];
+            double y_ = polyeval(coeffs, x_veh_coor[i]);
+            double A = k;
+            double B = -1;
+            double C = y_ - k * x_;
+            double s_error = fabs(A * x_veh_coor[i] + B * y_veh_coor[i] + C) / (sqrt(A * A + B * B));
+            result += s_error;
+        }
+
+        return result;
+    }
+}
+
+
+
 /**************************************************************************************************
  * @ Function: main()
  * @ Description:      // Description of the function
@@ -160,6 +196,11 @@ int main()
                 << "a3" << ","
                 << "cte" << ","
                 << "epsi" << ","
+                << "delta_position" << ","
+                << "cost_1" << ","
+                << "cost_2" << ","
+                << "cost_3" << ","
+                << "cost_4" << ","
                 << "global_x_1" << ","
                 << "global_x_2" << ","
                 << "global_x_3" << ","
@@ -223,18 +264,18 @@ int main()
 //                    cout<<"!!! Print JSON data !!!"<<endl;
 //                    cout<<"!!! ptsx size = "<<ptsx.size()<<endl;
 //                    cout<<"!!! ptsy size = "<<ptsy.size()<<endl;
-                    for(int i=0; i<ptsx.size(); i++)
-                    {
-                        cout<<"!!! ptsx = "<<ptsx[i]<<"\t"<<"ptsy = "<<ptsy[i]<<endl;
-                    }
-                    cout<<"!!! px = "<<px<<endl;
-                    cout<<"!!! py = "<<py<<endl;
+//                    for(int i=0; i<ptsx.size(); i++)
+//                    {
+//                        cout<<"!!! ptsx = "<<ptsx[i]<<"\t"<<"ptsy = "<<ptsy[i]<<endl;
+//                    }
+//                    cout<<"!!! px = "<<px<<endl;
+//                    cout<<"!!! py = "<<py<<endl;
 //                    cout<<"!!! psi_rad = "<<psi<<" rad"<<endl;
-                    cout<<"!!! psi_degree = "<<rad2deg(psi)<<" degree"<<endl;
+//                    cout<<"!!! psi_degree = "<<rad2deg(psi)<<" degree"<<endl;
 //                    cout<<"!!! psi_unity_rad = "<<psi_unity<<" rad"<<endl;
-                    cout<<"!!! psi_unity_degree = "<<rad2deg(psi_unity)<<" degree"<<endl;
+//                    cout<<"!!! psi_unity_degree = "<<rad2deg(psi_unity)<<" degree"<<endl;
 //                    cout<<"!!! v = "<<v<<" mph"<<endl;
-                    cout<<"!!! v = "<<mph2kmh(v)<<" kmh"<<endl;
+//                    cout<<"!!! v = "<<mph2kmh(v)<<" kmh"<<endl;
 //                    cout<<"!!! steering_angle = "<<rad2deg(steering_angle)<<" degrees"<<endl;
 //                    cout<<"!!! steering_angle = "<<steering_angle * 100<<" %"<<endl;
 //                    cout<<"!!! throttle = "<<throttle<<endl;
@@ -247,28 +288,66 @@ int main()
 
                     // >>>>> Transform coordinate to get epsi and cte
                     // Transform waypoints from Map/Global coordinate into vehicle coordinate
-                    // Vehicle coordinate : x to front, y to right
+                    // Vehicle coordinate : x to front, y to left
                     Eigen::VectorXd x_veh_coor(ptsx.size());
                     Eigen::VectorXd y_veh_coor(ptsy.size());
+                    vector<double> x_veh_coor_1(ptsx.size());
+                    vector<double> y_veh_coor_1(ptsy.size());
                     for(int i=0; i<ptsx.size(); i++)
                     {
-						const double xx = ptsx[i] - px;
-						const double yy = ptsy[i] - py;
-						x_veh_coor[i] = xx * cos(-psi) - yy * sin(-psi);
-						y_veh_coor[i] = xx * sin(-psi) + yy * cos(-psi);
-                        cout<<"x_veh_coor = "<<x_veh_coor[i]<<"\t"<<"y_veh_coor = "<<y_veh_coor[i]<<endl;
-					}
+                        const double xx = ptsx[i] - px;
+                        const double yy = ptsy[i] - py;
+                        x_veh_coor_1[i] = xx * cos(-psi) - yy * sin(-psi);
+                        y_veh_coor_1[i] = xx * sin(-psi) + yy * cos(-psi);
+//                        cout<<"x_veh_coor = "<<x_veh_coor[i]<<"\t"<<"y_veh_coor = "<<y_veh_coor[i]<<endl;
+                    }
+
+                    for(int i=0; i<ptsx.size(); i++)
+                    {
+                        const double xx = ptsx[i] - px;
+                        const double yy = ptsy[i] - py;
+                        x_veh_coor[i] = xx * sin(psi_unity) + yy * cos(psi_unity);
+                        y_veh_coor[i] = yy * sin(psi_unity) - xx * cos(psi_unity);
+//                        cout<<"x_veh_coor = "<<x_veh_coor[i]<<"\t"<<"y_veh_coor = "<<y_veh_coor[i]<<endl;
+                    }
+
+//                    for(int i=0; i<ptsx.size(); i++)
+//                    {
+//                        cout<<"!!! x error = "<<x_veh_coor_1[i] - x_veh_coor[i]<<endl;
+//                        cout<<"!!! y error = "<<y_veh_coor_1[i] - y_veh_coor[i]<<endl;
+//                        if(fabs(x_veh_coor_1[i] - x_veh_coor[i]) > 1e-3 || fabs(y_veh_coor_1[i] - y_veh_coor[i]) > 1e-3)
+//                            cout<<"!!!!!! BIG Error !!!!!!"<<endl;
+//                    }
 
                     auto coeffs = polyfit(x_veh_coor, y_veh_coor, 3);    // Get a0, a1, a2, a3
 					const double epsi = -atan(coeffs[1]);
                     const double cte = polyeval(coeffs, 0);    // set x=0, obtain a0, path position
-                    cout<<"!!! epsi = "<<epsi<<endl;
-                    cout<<"!!! cte = "<<cte<<endl;
-                    cout<<"!!! a0 = "<<coeffs[0]<<endl;
-                    cout<<"!!! a1 = "<<coeffs[1]<<endl;
-                    cout<<"!!! a2 = "<<coeffs[2]<<endl;
-                    cout<<"!!! a3 = "<<coeffs[3]<<endl;
+//                    cout<<"!!! epsi = "<<epsi<<endl;
+//                    cout<<"!!! cte = "<<cte<<endl;
+//                    cout<<"!!! a0 = "<<coeffs[0]<<endl;
+//                    cout<<"!!! a1 = "<<coeffs[1]<<endl;
+//                    cout<<"!!! a2 = "<<coeffs[2]<<endl;
+//                    cout<<"!!! a3 = "<<coeffs[3]<<endl;
 
+
+                    auto coeffs_1 = FitterLeastSquareMethod(x_veh_coor_1, y_veh_coor_1, 3);
+
+
+                    double delta_x = fabs(py - ptsy[1]);
+                    if(ptsy[1] < py) delta_x = - delta_x;
+                    double delta_y = fabs(px - ptsx[1]);
+                    if(ptsx[1] < px) delta_y = - delta_y;
+                    double delta_position = - delta_x * sin(psi_unity) + delta_y * cos(psi_unity);
+
+
+                    int eval_method = 1;
+                    double cost_1 = curve_eval(x_veh_coor, y_veh_coor, coeffs, eval_method);
+                    eval_method = 2;
+                    double cost_2 = curve_eval(x_veh_coor, y_veh_coor, coeffs, eval_method);
+                    eval_method = 1;
+                    double cost_3 = curve_eval(x_veh_coor, y_veh_coor, coeffs_1, eval_method);
+                    eval_method = 2;
+                    double cost_4 = curve_eval(x_veh_coor, y_veh_coor, coeffs_1, eval_method);
 
                     // log data
                     if(is_data_log)
@@ -287,6 +366,11 @@ int main()
                                 << coeffs[3] << ","
                                 << cte << ","
                                 << epsi << ","
+                                << delta_position << ","
+                                << cost_1 << ","
+                                << cost_2 << ","
+                                << cost_3 << ","
+                                << cost_4 << ","
                                 << ptsx[0] << ","
                                 << ptsx[1] << ","
                                 << ptsx[2] << ","

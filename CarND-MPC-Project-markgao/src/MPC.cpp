@@ -265,7 +265,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
 
 	// Cost
 	auto cost = solution.obj_value;
-    cout<<"Cost = "<<cost<<endl;
+//    cout<<"Cost = "<<cost<<endl;
 
 	// Return the first actuator values, along with predicted x and y values to plot in the simulator.
 	vector<double> solved_results;
